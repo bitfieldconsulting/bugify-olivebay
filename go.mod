@@ -1,4 +1,4 @@
-module github.com/bugify-olivebay
+module github.com/olivebay/bugify-olivebay
 
 go 1.14
 

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/bugify-olivebay"
+	"github.com/olivebay/bugify-olivebay"
 )
 
 func TestOpenGitHubIssue(t *testing.T) {
