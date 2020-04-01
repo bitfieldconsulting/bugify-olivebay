@@ -1,13 +1,15 @@
 package bugify_test
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/olivebay/bugify"
+	"github.com/bugify-olivebay"
 )
 
 func TestOpenGitHubIssue(t *testing.T) {
@@ -25,30 +27,36 @@ func TestOpenGitHubIssue(t *testing.T) {
 			t.Error(cmp.Diff(wantURL, r.URL.Path))
 		}
 
+		wantData := `{"title":"[auto-generated]","body":"something went wrong: error"}`
+		gotData, _ := ioutil.ReadAll(r.Body)
+		if !cmp.Equal(wantData, string(gotData)) {
+			t.Error(cmp.Diff(wantData, string(gotData)))
+		}
+
 		w.WriteHeader(http.StatusCreated)
-		data := `{"id": "1"}`
+		data := `{"id": 1, "title": "[auto-generated]", "body":"something went wrong: error"}`
 		fmt.Fprintf(w, data)
 	}))
 	defer ts.Close()
 
-	client := bugify.NewClient("dummy")
+	client := bugify.NewClient("dummy", "test_owner/test_repo")
 	client.HTTPClient = ts.Client()
 	client.URL = ts.URL
-	client.Repository = "test_owner/test_repo"
 
 	wantRes := bugify.Issue{
+		ID:    1,
 		Title: "[auto-generated]",
-		Body:  "I'm having a problem with this.",
+		Body:  "something went wrong: error",
 	}
 
-	res, err := client.Create(wantRes)
+	exampleError := errors.New("error")
+	res, err := client.Create("[auto-generated]", fmt.Sprintf("something went wrong: %v", exampleError))
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("failed to create GitHub issue", err)
 	}
 
-	wantID := "1"
-	if !cmp.Equal(res, wantID) {
-		t.Error(cmp.Diff(res, wantID))
+	if !cmp.Equal(res, wantRes) {
+		t.Error(cmp.Diff(res, wantRes))
 	}
 
 	if !called {
