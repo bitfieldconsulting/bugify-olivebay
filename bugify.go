@@ -30,13 +30,6 @@ type apiResponse struct {
 	URL string `json:"html_url"`
 }
 
-func NewIssue(title string, body string) Issue {
-	return Issue{
-		Title: title,
-		Body:  body,
-	}
-}
-
 // Create creates a new GitHub issue.
 func Open(issue Issue) (URL string, err error) { // always add a variable on what it returns. Its more clear
 	data, err := json.Marshal(apiRequest{
