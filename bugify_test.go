@@ -1,11 +1,12 @@
 package bugify_test
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,51 +15,53 @@ import (
 
 func TestOpenGitHubIssue(t *testing.T) {
 	called := false
-
+	issue := bugify.Issue{
+		GitHubAPIKey: "dummy",
+		Repo:         "olivebay/urlinfo2",
+		Title:        "Error in user program",
+		Body:         "Bad stuff happened internally",
+	}
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
-
-		if !cmp.Equal(r.Method, http.MethodPost) {
-			t.Error(cmp.Diff(r.Method, http.MethodGet))
+		wantMethod := http.MethodPost
+		if !cmp.Equal(r.Method, wantMethod) {
+			t.Error(cmp.Diff(r.Method, wantMethod))
 		}
 
-		wantURL := "/repos/test_owner/test_repo/issues"
+		wantURL := fmt.Sprintf("/repos/%s/issues", issue.Repo)
 		if !cmp.Equal(wantURL, r.URL.String()) {
 			t.Error(cmp.Diff(wantURL, r.URL.Path))
 		}
 
-		wantData := `{"title":"[auto-generated]","body":"something went wrong: error"}`
-		gotData, _ := ioutil.ReadAll(r.Body)
+		wantData := fmt.Sprintf("{\"title\":%q,\"body\":%q}", issue.Title, issue.Body)
+		gotData, _ := ioutil.ReadAll(r.Body) // dont leave errors!
 		if !cmp.Equal(wantData, string(gotData)) {
 			t.Error(cmp.Diff(wantData, string(gotData)))
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		data := `{"id": 1, "title": "[auto-generated]", "body":"something went wrong: error"}`
-		fmt.Fprintf(w, data)
+		file, err := os.Open("testdata/response.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer file.Close()
+		_, err = io.Copy(w, file)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer ts.Close()
 
-	client := bugify.NewClient("dummy", "test_owner/test_repo")
-	client.HTTPClient = ts.Client()
-	client.URL = ts.URL
-
-	wantRes := bugify.Issue{
-		ID:    1,
-		Title: "[auto-generated]",
-		Body:  "something went wrong: error",
-	}
-
-	exampleError := errors.New("error")
-	res, err := client.Create("[auto-generated]", fmt.Sprintf("something went wrong: %v", exampleError))
+	bugify.HTTPClient = ts.Client()
+	bugify.GitHubAPIURL = ts.URL
+	wantIssueURL := "https://github.com/olivebay/urlinfo2/issues/6/"
+	issueURL, err := bugify.Open(issue)
 	if err != nil {
-		t.Fatal("failed to create GitHub issue", err)
+		t.Fatalf("failed to create GitHub issue %v", err)
 	}
-
-	if !cmp.Equal(res, wantRes) {
-		t.Error(cmp.Diff(res, wantRes))
+	if !cmp.Equal(wantIssueURL, issueURL) {
+		t.Error(cmp.Diff(wantIssueURL, issueURL))
 	}
-
 	if !called {
 		t.Error("want API call, but got none")
 	}

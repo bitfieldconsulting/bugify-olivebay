@@ -6,78 +6,74 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
-// Client represents a GitHub client.
-// You can specify your API key and the repository in which to create the issue.
-type Client struct {
-	apiKey     string
-	URL        string
-	Repository string
-	HTTPClient *http.Client
-}
+var GitHubAPIURL = "https://api.github.com"
+var HTTPClient = &http.Client{Timeout: 10 * time.Second}
 
 // Issue represents information about an GitHub issue.
 type Issue struct {
-	ID    int `json:"id,omitempty"`
+	Title        string
+	Body         string
+	GitHubAPIKey string
+	Repo         string
+}
+
+type apiRequest struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
-	URL   string `json:"url,omitempty"`
 }
 
-// NewClient takes GitHub API key and the repository name in the form of :owner/:repo and returns a Client.
-func NewClient(apiKey string, repo string) Client {
-	return Client{
-		apiKey:     apiKey,
-		URL:        "https://api.github.com",
-		Repository: repo,
-		HTTPClient: http.DefaultClient,
-	}
+type apiResponse struct {
+	ID  int64  `json:"id"`
+	URL string `json:"html_url"`
 }
-func NewIssue(title string, body string) Issue{
+
+func NewIssue(title string, body string) Issue {
 	return Issue{
 		Title: title,
-		Body: body,
+		Body:  body,
 	}
 }
 
-// Create creates a new GitHub issue
-func (c *Client) Create(title string, body string) (Issue, error) {
-	issue := NewIssue(title, body)
-	data, err := json.Marshal(issue)
+// Create creates a new GitHub issue.
+func Open(issue Issue) (URL string, err error) { // always add a variable on what it returns. Its more clear
+	data, err := json.Marshal(apiRequest{
+		Title: issue.Title,
+		Body:  issue.Body,
+	})
 	if err != nil {
-		return Issue{}, err
+		return "", err
 	}
-
-	requestURL := c.URL + "/repos/" + c.Repository + "/issues"
+	requestURL := GitHubAPIURL + "/repos/" + issue.Repo + "/issues"
 	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewBuffer(data))
 	if err != nil {
-		return Issue{}, fmt.Errorf("failed to create GitHub issue request: %v", err)
+		return "", err // no need for extra text
 	}
-	
-	req.Header.Add("Authorization", "Token "+c.apiKey)
+
+	req.Header.Add("Authorization", "Token "+issue.GitHubAPIKey)
 	req.Header.Add("content-type", "application/json")
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		return Issue{}, fmt.Errorf("HTTP request failed: %v", err)
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	res, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return Issue{}, err
+		return "", err
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return Issue{}, fmt.Errorf("unexpected response: %d %q", resp.StatusCode, string(res))
+		return "", fmt.Errorf("unexpected response: %d %q", resp.StatusCode, string(res))
 	}
 
-	var result Issue
+	var result apiResponse
 	err = json.NewDecoder(bytes.NewReader(res)).Decode(&result)
 	if err != nil {
-		return Issue{}, fmt.Errorf("error decoding: %s %v", res, err)
+		return "", fmt.Errorf("error decoding: %s %v", res, err)
 	}
-
-	return result, nil
+	return result.URL, nil
 }
