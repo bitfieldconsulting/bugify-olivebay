@@ -1,0 +1,49 @@
+{
+    "url": "https://api.github.com/repos/olivebay/urlinfo2/issues/6",
+    "repository_url": "https://api.github.com/repos/olivebay/urlinfo2",
+    "labels_url": "https://api.github.com/repos/olivebay/urlinfo2/issues/6/labels{/name}",
+    "comments_url": "https://api.github.com/repos/olivebay/urlinfo2/issues/6/comments",
+    "events_url": "https://api.github.com/repos/olivebay/urlinfo2/issues/6/events",
+    "html_url": "https://github.com/olivebay/urlinfo2/issues/6/",
+    "id": 592735739,
+    "node_id": "MDU6SXNzdWU1OTI3MzU3Mzk=",
+    "number": 6,
+    "title": "my-new-repo",
+    "user": {
+      "login": "olivebay",
+      "id": 56356801,
+      "node_id": "MDQ6VXNlcjU2MzU2ODAx",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/56356801?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/olivebay",
+      "html_url": "https://github.com/olivebay",
+      "followers_url": "https://api.github.com/users/olivebay/followers",
+      "following_url": "https://api.github.com/users/olivebay/following{/other_user}",
+      "gists_url": "https://api.github.com/users/olivebay/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/olivebay/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/olivebay/subscriptions",
+      "organizations_url": "https://api.github.com/users/olivebay/orgs",
+      "repos_url": "https://api.github.com/users/olivebay/repos",
+      "events_url": "https://api.github.com/users/olivebay/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/olivebay/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "labels": [
+  
+    ],
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [
+  
+    ],
+    "milestone": null,
+    "comments": 0,
+    "created_at": "2020-04-02T15:48:47Z",
+    "updated_at": "2020-04-02T15:48:47Z",
+    "closed_at": null,
+    "author_association": "OWNER",
+    "body": "my new issue description",
+    "closed_by": null
+  }
